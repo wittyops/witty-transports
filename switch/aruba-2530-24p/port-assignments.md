@@ -1,33 +1,63 @@
 # Aruba 2530-24P — Port Assignments
 
-**Status**: template — fill in as cables are run. Update this file and commit whenever you patch a cable.
+Pulled from switch `show running-config` + `show lldp info remote-device all` on 2026-06-06.
 
 ## Port Map
 
-| Port | Device | VLAN | Mode | Notes |
-|------|--------|------|------|-------|
-| 1 | Aruba AP-515 (wn-ap-tt-01) | 10 (native) + 40 (tagged) | Trunk | PoE powers AP; native VLAN 10 for AP mgmt |
-| 2 | wn-docker-01 | 10 (native) + 30 (tagged) | Trunk | MGMT for host, DATA for macvlan containers |
-| 3–22 | *unassigned / end devices* | varies | Access | Update as devices connect |
-| 23 | *reserved* | 10 | Access | Spare MGMT port |
-| 24 | pfSense (wn-router-01) | all tagged | Trunk | All-VLAN trunk uplink |
-| 25–26 | SFP uplinks | — | — | Not in use |
+| Port | Name / Device | Native VLAN | Tagged VLANs | Mode | Notes |
+|------|--------------|-------------|--------------|------|-------|
+| 1 | pfSense uplink (wn-router-01) | — | 10, 20, 30, 40 | Trunk | All-VLAN trunk to pfSense vtnet0 |
+| 2 | wn-docker-01 | 10 | 20, 30, 40 | Trunk | MGMT for host NIC; macvlan containers use VLAN 30 |
+| 3 | Samsung-F43-Hardwire | 30 | — | Access | Direct-cabled device; DATA VLAN |
+| 4 | *unassigned* | 1 | — | Access | — |
+| 5 | *unknown MGMT device* | 10 | — | Access | Named in VLAN 10 untagged list; no LLDP data |
+| 6 | *unassigned* | 1 | — | Access | — |
+| 7 | Robin-Office-Hardline | 10 | — | Access | Wired MGMT drop — Robin's office |
+| 8–9 | *unassigned* | 1 | — | Access | — |
+| 10 | *unknown WEB device* | 20 | — | Access | VLAN 20 native; no LLDP data |
+| 11–21 | *unassigned* | 1 | — | Access | Available |
+| 22 | AP-515 / BearAir | 10 | 20, 30, 40 | Trunk | PoE critical; STP edge + BPDU filter; 25.5W |
+| 23 | WN-MOB-TT-002 | 10 | 1, 20, 30, 40 | Trunk | LLDP detected; unknown device class |
+| 24 | Switch management | 10 | — | Access | Switch's own CLI/web access port |
+| 25–26 | SFP uplinks | 1 | — | — | Not in use |
+| 27–28 | RJ45 uplinks | 1 | — | — | Not in use |
 
-> Ports 3–22 are access ports assigned per-device. Document each cable run here.
-> Always check this file before patching to avoid VLAN mismatches.
+## PoE Budget
 
-## PoE Budget Tracking
-
-| Port | Device | PoE Class | Draw |
-|------|--------|-----------|------|
-| 1 | AP-515 | Class 4 | ~15W |
+| Port | Device | PoE Class | Negotiated Draw |
+|------|--------|-----------|-----------------|
+| 22 | AP-515 (BearAir) | Type 2 PD | **25.5W** (LLDP confirmed) |
 | — | — | — | — |
-| **Total** | | | **~15W / 195W** |
+| **Total** | | | **25.5W / 195W** |
+
+Port 22 is set `power-over-ethernet critical` — it will shed lower-priority PoE devices first if budget is exceeded.
+
+## Named Interfaces
+
+From `interface` blocks in running config:
+```
+interface 3  → "Samsung-F43-Hardwire"
+interface 7  → "Robin-Office-Hardline"
+interface 22 → "BearAir"    (AP-515; PoE critical; DLDP enabled; STP edge + BPDU filter)
+```
+
+## LLDP Neighbors (2026-06-06)
+
+| Switch Port | Remote Device | Remote IP | Description |
+|-------------|--------------|-----------|-------------|
+| 22 | 9c:8c:d8:c9:2a:9c | 10.10.10.198 | AOS-8 (MODEL: 515) — AP-515 |
+| 23 | WN-MOB-TT-002 | — | Unknown; no system caps reported |
+
+> Note: The AP's LLDP-reported IP (10.10.10.198) differs from its management DHCP reservation (10.10.10.101). Both respond to ping; `.101` is the VC management address.
 
 ## Cable Run Log
 
-| Date | Port | Device | Run by | Notes |
-|------|------|--------|--------|-------|
-| 2026-06-06 | 1 | AP-515 | bearboss | Initial setup |
-| 2026-06-06 | 24 | pfSense uplink | bearboss | Trunk to router |
-| 2026-06-06 | 2 | wn-docker-01 | bearboss | Server NIC |
+| Date | Port | Device | Notes |
+|------|------|--------|-------|
+| 2026-06-06 | 1 | pfSense (wn-router-01) | Trunk uplink to router |
+| 2026-06-06 | 2 | wn-docker-01 | Server NIC — host + container VLAN trunk |
+| 2026-06-06 | 3 | Samsung-F43-Hardwire | DATA VLAN access port |
+| 2026-06-06 | 7 | Robin-Office-Hardline | MGMT VLAN access port |
+| 2026-06-06 | 22 | AP-515 (BearAir) | AP trunk + PoE |
+
+> Update this log whenever a cable is patched or moved.

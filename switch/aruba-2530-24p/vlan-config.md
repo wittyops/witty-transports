@@ -1,118 +1,124 @@
 # Aruba 2530-24P — VLAN Configuration
 
+Pulled from `show running-config` on 2026-06-06. This is the live state, not a template.
+
 ## VLANs Defined
 
-| VLAN ID | Name | Purpose |
-|---------|------|---------|
-| 1 | DEFAULT_VLAN | Default (limit use — anything untagged lands here) |
-| 10 | MGMT | Management, wired trusted devices, WiFi trusted clients |
-| 20 | WEB | Web-facing tier |
-| 30 | DATA | Service containers (wn-caddy-01, wn-vault-01, etc.) |
-| 40 | IoT | IoT devices, smart home, IP cameras |
+| VLAN ID | Name (ProVision) | Purpose |
+|---------|-----------------|---------|
+| 1 | DEFAULT_VLAN | Unassigned/default — unpatched ports land here; limit use |
+| 10 | Witty-Mgmt-10 | Management — servers, AP, trusted WiFi (BearFamily SSID) |
+| 20 | Witty-Web-20 | Web-facing tier — wired WEB devices |
+| 30 | Witty-Data-30 | Service containers (wn-caddy-01, wn-vault-01, all wn-*) |
+| 40 | IoT-Simple | IoT devices — BearThings SSID, Samsung-F43 via AP enet1 |
 
-## ProVision Commands to Apply
+## Running Config (extracted, 2026-06-06)
 
-```bash
-# SSH into switch
-ssh admin@10.10.10.2
-
-config
-
-# Create VLANs
-vlan 10 name "MGMT"
-vlan 20 name "WEB"
-vlan 30 name "DATA"
-vlan 40 name "IoT"
-
-# Set switch management IP on VLAN 10
-vlan 10
-  ip address 10.10.10.2 255.255.255.0
-exit
-
-# Default gateway (pfSense MGMT interface)
+```
+hostname "wn-sw-tt-01"
 ip default-gateway 10.10.10.1
+ip dns domain-name "wittycomp.com"
+ip source-interface tftp vlan 10
 
-write memory
-```
-
-## Trunk Port Setup
-
-The uplink to pfSense must carry all VLANs tagged. pfSense terminates each VLAN as a subinterface.
-
-```bash
-config
-
-# Uplink port to pfSense — example: port 24 (adjust to your actual uplink)
 vlan 1
-  untagged 24      # VLAN 1 native on trunk (or remove from access)
+   name "DEFAULT_VLAN"
+   no untagged 1-3,5,7,10,22,24
+   untagged 4,6,8-9,11-21,25-28
+   tagged 23
+   no ip address
+
 vlan 10
-  tagged 24
+   name "Witty-Mgmt-10"
+   untagged 2,5,7,22-24
+   tagged 1,20
+   ip address 10.10.10.2 255.255.255.0
+   ip igmp
+
 vlan 20
-  tagged 24
+   name "Witty-Web-20"
+   untagged 10
+   tagged 1-2,22-23
+   no ip address
+
 vlan 30
-  tagged 24
-vlan 40
-  tagged 24
+   name "Witty-Data-30"
+   untagged 3
+   tagged 1-2,22-23
+   no ip address
+   ip igmp
 
-write memory
+vlan 40
+   name "IoT-Simple"
+   tagged 1-2,22-23
+   no ip address
 ```
 
-## AP-515 Trunk Port
+> VLAN 40 has no untagged (access) ports on the switch itself — all IoT devices reach VLAN 40 through the AP's SSIDs or the AP's enet1 hardwired port, which tag the traffic before it hits port 22.
 
-The AP runs multiple SSIDs, each mapped to a different VLAN. The switch port connected to the AP must be a trunk carrying VLAN 10 (trusted WiFi) and VLAN 40 (IoT WiFi).
+## Port VLAN Membership Summary
+
+| Port | Native (untagged) | Tagged | Device |
+|------|-------------------|--------|--------|
+| 1 | — | 10, 20, 30, 40 | pfSense trunk uplink |
+| 2 | 10 | 20, 30, 40 | wn-docker-01 |
+| 3 | 30 | — | Samsung-F43-Hardwire (DATA) |
+| 4 | 1 | — | Unassigned |
+| 5 | 10 | — | Unknown MGMT device |
+| 6 | 1 | — | Unassigned |
+| 7 | 10 | — | Robin-Office-Hardline |
+| 8-9 | 1 | — | Unassigned |
+| 10 | 20 | — | Unknown WEB device |
+| 11-21 | 1 | — | Unassigned |
+| 22 | 10 | 20, 30, 40 | AP-515 (BearAir) trunk — PoE critical |
+| 23 | 10 | 1, 20, 30, 40 | WN-MOB-TT-002 (LLDP) |
+| 24 | 10 | — | Switch management access port |
+| 25-28 | 1 | — | Uplinks/SFPs — unassigned |
+
+## Security
+
+```
+ip authorized-managers 10.10.10.0 255.255.255.0 access manager
+ip authorized-managers 10.10.20.0 255.255.255.0 access manager
+ip authorized-managers 10.10.30.0 255.255.255.0 access operator
+aaa authentication login privilege-mode
+```
+
+Management access is limited to MGMT and WEB VLANs; DATA VLAN gets operator (read-only) access.
+
+## Adding a New VLAN
 
 ```bash
+ssh admin@10.10.10.2
+# (interactive login required)
+
 config
 
-# AP-515 port — example: port 1 (adjust to your cable)
-vlan 10
-  tagged 1
-vlan 40
-  tagged 1
-# Native VLAN for AP management traffic:
-vlan 10
-  untagged 1      # AP management IP (10.10.10.101) is on VLAN 10 untagged
+# 1. Create VLAN
+vlan 50
+   name "Guest-50"
+   exit
+
+# 2. Tag it on trunk ports
+vlan 50
+   tagged 1       # pfSense uplink — creates subinterface there
+   tagged 2       # docker host (if needed)
+   tagged 22      # AP (if AP will serve this VLAN via SSID)
+   exit
+
+# 3. Access port example
+vlan 50
+   untagged 15    # device on port 15 gets VLAN 50 native
+   exit
 
 write memory
 ```
 
-## Docker Host Port (wn-docker-01)
-
-The docker host needs VLAN 10 for its own management IP and VLAN 30 for macvlan container traffic.
+## Verify
 
 ```bash
-config
-
-# wn-docker-01 port — example: port 2
-vlan 10
-  untagged 2     # host management (10.10.10.10) — untagged = native
-vlan 30
-  tagged 2       # macvlan containers get tagged VLAN 30 frames
-
-write memory
-```
-
-## Access Ports (End Devices)
-
-Most wired devices get a single untagged VLAN — they never see VLAN tags.
-
-```bash
-config
-
-# Example: IoT device (smart TV) on port 10
-vlan 1
-  no untagged 10   # remove from default VLAN first
-vlan 40
-  untagged 10      # native IoT VLAN
-
-write memory
-```
-
-## Verify Config
-
-```bash
-show vlan                          # list all VLANs
-show vlan 30                       # see which ports are tagged/untagged for VLAN 30
+show vlan                          # list all VLANs and member ports
+show vlan 30                       # detail for DATA VLAN
 show interfaces brief              # port link states
-show lldp info remote-device all   # see what's connected to each port
+show lldp info remote-device all   # neighbor discovery
+show spanning-tree                 # RSTP state
 ```

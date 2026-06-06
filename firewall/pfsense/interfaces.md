@@ -15,13 +15,16 @@ pfSense CE at `10.10.10.1` (wn-router-01). Connects to the Aruba 2530-24P via a 
 
 ## VLAN Subinterfaces
 
-pfSense creates VLAN subinterfaces on the physical trunk NIC:
+pfSense creates VLAN subinterfaces on the physical trunk NIC (vtnet0 = LAN/trunk NIC; vtnet1 = WAN):
 ```
-em0.10 → opt1 (MGMT)
-em0.20 → opt2 (WEB)
-em0.30 → opt3 (DATA)
-em0.40 → opt4 (IoT)
+vtnet0.10 → opt1 (MGMT)
+vtnet0.20 → opt2 (WEB)
+vtnet0.30 → opt3 (DATA)
+vtnet0.40 → opt4 (IoT)
 ```
+
+> Confirmed from pfSense XML config pulled via XMLRPC on 2026-06-06. VLAN names in pfSense:
+> VLAN 10 = MGMT_VLAN, VLAN 20 = WEB_PROXY_VLAN, VLAN 30 = DATA_APPS_VLAN, VLAN 40 = IOT_DATA_VLAN
 
 ## DHCP Scopes
 
