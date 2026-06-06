@@ -12,7 +12,7 @@ Physical port assignments confirmed by bearboss 2026-06-06.
 | 3 | Samsung-F43-Hardwire | 30 | — | Access | Directly cabled device; DATA VLAN |
 | 4 | *unassigned* | 1 | — | Access | Available |
 | 5 | Sonos speaker | 10 | — | Access | MGMT VLAN (trusted audio device) |
-| 6 | Sonos speaker | 1 | — | Access | Default VLAN — consider moving to MGMT (10) for consistency |
+| 6 | Sonos speaker | 10 | — | Access | MGMT VLAN — moved from VLAN 1 on 2026-06-06 for Sonos group consistency |
 | 7 | Robin-Office-Hardline | 10 | — | Access | Wired MGMT drop — Robin's office |
 | 8–9 | *unassigned* | 1 | — | Access | Available |
 | 10 | *unknown WEB device* | 20 | — | Access | VLAN 20 native; no LLDP data |
@@ -23,7 +23,6 @@ Physical port assignments confirmed by bearboss 2026-06-06.
 | 25–26 | SFP uplinks | 1 | — | — | Not in use |
 | 27–28 | RJ45 uplinks | 1 | — | — | Not in use |
 
-> **Port 6 note**: Currently in DEFAULT_VLAN (1). Sonos speakers should be on VLAN 10 (MGMT) like port 5 so they stay accessible from trusted clients; or move to a dedicated Media VLAN if stricter isolation is desired.
 
 ## PoE Budget
 
@@ -61,6 +60,7 @@ interface 22 → "BearAir"    (AP-515; PoE critical; DLDP enabled; STP edge + BP
 | 2026-06-06 | 3 | Samsung-F43-Hardwire | DATA VLAN access |
 | 2026-06-06 | 5 | Sonos speaker | MGMT VLAN access |
 | 2026-06-06 | 6 | Sonos speaker | Default VLAN (needs review) |
+| 2026-06-06 | 6 | Sonos speaker | Moved VLAN 1 → VLAN 10 for Sonos group consistency |
 | 2026-06-06 | 7 | Robin-Office-Hardline | MGMT VLAN access |
 | 2026-06-06 | 22 | AP-515 (BearAir) | AP trunk + PoE |
 | 2026-06-06 | 24 | Laptop dock | MGMT VLAN access — bearboss workstation |

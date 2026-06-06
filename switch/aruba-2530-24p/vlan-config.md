@@ -22,14 +22,14 @@ ip source-interface tftp vlan 10
 
 vlan 1
    name "DEFAULT_VLAN"
-   no untagged 1-3,5,7,10,22,24
-   untagged 4,6,8-9,11-21,25-28
+   no untagged 1-3,5-7,10,22,24
+   untagged 4,8-9,11-21,25-28
    tagged 23
    no ip address
 
 vlan 10
    name "Witty-Mgmt-10"
-   untagged 2,5,7,22-24
+   untagged 2,5-7,22-24
    tagged 1,20
    ip address 10.10.10.2 255.255.255.0
    ip igmp
@@ -59,19 +59,19 @@ vlan 40
 
 | Port | Native (untagged) | Tagged | Device |
 |------|-------------------|--------|--------|
-| 1 | — | 10, 20, 30, 40 | pfSense trunk uplink |
-| 2 | 10 | 20, 30, 40 | wn-docker-01 |
+| 1 | — | 10, 20, 30, 40 | ISP ONT uplink |
+| 2 | 10 | 20, 30, 40 | wn-srv-01 (Docker host) |
 | 3 | 30 | — | Samsung-F43-Hardwire (DATA) |
 | 4 | 1 | — | Unassigned |
-| 5 | 10 | — | Unknown MGMT device |
-| 6 | 1 | — | Unassigned |
+| 5 | 10 | — | Sonos speaker |
+| 6 | 10 | — | Sonos speaker (moved from VLAN 1 → 10 on 2026-06-06) |
 | 7 | 10 | — | Robin-Office-Hardline |
 | 8-9 | 1 | — | Unassigned |
 | 10 | 20 | — | Unknown WEB device |
 | 11-21 | 1 | — | Unassigned |
 | 22 | 10 | 20, 30, 40 | AP-515 (BearAir) trunk — PoE critical |
-| 23 | 10 | 1, 20, 30, 40 | WN-MOB-TT-002 (LLDP) |
-| 24 | 10 | — | Switch management access port |
+| 23 | 10 | 1, 20, 30, 40 | WN-MOB-TT-002 (LLDP; device TBD) |
+| 24 | 10 | — | Laptop dock (bearboss workstation, built-in NIC) |
 | 25-28 | 1 | — | Uplinks/SFPs — unassigned |
 
 ## Security
