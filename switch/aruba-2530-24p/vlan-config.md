@@ -70,7 +70,7 @@ vlan 40
 | 10 | 20 | — | Unknown WEB device |
 | 11-21 | 1 | — | Unassigned |
 | 22 | 10 | 20, 30, 40 | AP-515 (BearAir) trunk — PoE critical |
-| 23 | 10 | 1, 20, 30, 40 | WN-MOB-TT-002 (LLDP; device TBD) |
+| 23 | 10 | 1, 20, 30, 40 | BearLaptop (bearboss laptop, LLDP: WN-MOB-TT-002) |
 | 24 | 10 | — | Laptop dock (bearboss workstation, built-in NIC) |
 | 25-28 | 1 | — | Uplinks/SFPs — unassigned |
 

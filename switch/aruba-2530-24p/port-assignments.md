@@ -18,7 +18,7 @@ Physical port assignments confirmed by bearboss 2026-06-06.
 | 10 | *unknown WEB device* | 20 | — | Access | VLAN 20 native; no LLDP data |
 | 11–21 | *unassigned* | 1 | — | Access | Available |
 | 22 | AP-515 / BearAir | 10 | 20, 30, 40 | Trunk | PoE critical; STP edge + BPDU filter; 25.5W |
-| 23 | WN-MOB-TT-002 | 10 | 1, 20, 30, 40 | Trunk | LLDP detected; device identity TBD |
+| 23 | BearLaptop (bearboss laptop) | 10 | 1, 20, 30, 40 | Trunk | LLDP: WN-MOB-TT-002, MAC a4:4c:c8:b0:5f:a1 |
 | 24 | Laptop dock (built-in NIC) | 10 | — | Access | bearboss workstation dock; MGMT VLAN |
 | 25–26 | SFP uplinks | 1 | — | — | Not in use |
 | 27–28 | RJ45 uplinks | 1 | — | — | Not in use |
@@ -39,7 +39,8 @@ Port 22 is set `power-over-ethernet critical` — it will shed lower-priority Po
 ```
 interface 3  → "Samsung-F43-Hardwire"
 interface 7  → "Robin-Office-Hardline"
-interface 22 → "BearAir"    (AP-515; PoE critical; DLDP enabled; STP edge + BPDU filter)
+interface 22 → "BearAir"      (AP-515; PoE critical; DLDP enabled; STP edge + BPDU filter)
+interface 23 → "BearLaptop"   (bearboss laptop; full trunk; LLDP: WN-MOB-TT-002)
 ```
 
 ## LLDP Neighbors (2026-06-06)
@@ -47,7 +48,7 @@ interface 22 → "BearAir"    (AP-515; PoE critical; DLDP enabled; STP edge + BP
 | Switch Port | Remote Device | Remote IP | Description |
 |-------------|--------------|-----------|-------------|
 | 22 | 9c:8c:d8:c9:2a:9c | 10.10.10.198 | AOS-8 (MODEL: 515) — AP-515 |
-| 23 | WN-MOB-TT-002 | — | No system caps; device identity TBD |
+| 23 | BearLaptop (bearboss laptop) | — | LLDP name WN-MOB-TT-002, MAC a4:4c:c8:b0:5f:a1 |
 
 > AP's LLDP-reported IP (10.10.10.198) differs from its management DHCP reservation (10.10.10.101). Both respond; `.101` is the VC management address used for SSH/web.
 
@@ -63,6 +64,7 @@ interface 22 → "BearAir"    (AP-515; PoE critical; DLDP enabled; STP edge + BP
 | 2026-06-06 | 6 | Sonos speaker | Moved VLAN 1 → VLAN 10 for Sonos group consistency |
 | 2026-06-06 | 7 | Robin-Office-Hardline | MGMT VLAN access |
 | 2026-06-06 | 22 | AP-515 (BearAir) | AP trunk + PoE |
-| 2026-06-06 | 24 | Laptop dock | MGMT VLAN access — bearboss workstation |
+| 2026-06-06 | 23 | BearLaptop | bearboss laptop — MGMT + all VLANs trunk; interface named on switch |
+| 2026-06-06 | 24 | Laptop dock | Built-in NIC via dock — MGMT VLAN access |
 
 > Update this log whenever a cable is patched or moved.
