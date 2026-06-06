@@ -14,6 +14,8 @@ Network changes have a different blast radius than application changes. A miscon
 | Switch | Aruba 2530-24P (J9773A) | Layer 2 switching, VLAN tagging, PoE | 10.10.10.2 |
 | Access Point | Aruba AP-515 | Wi-Fi 6 (802.11ax), Instant AP mode | 10.10.10.101 |
 | DNS | Technitium (wn-docker-01) | Split-horizon DNS, DHCP authoritative | 10.10.10.10 |
+| NFS Server | wn-srv-01 | `/data/media` exported read-only to lab | 10.10.10.10 |
+| Media Client | LibreELEC / wn-elec-01 (RPi4) | Kodi NFS client — movies, TV, music | 10.10.10.130 |
 
 ## VLAN Map (Quick Reference)
 
