@@ -1,26 +1,29 @@
 # Aruba 2530-24P — Port Assignments
 
 Pulled from switch `show running-config` + `show lldp info remote-device all` on 2026-06-06.
+Physical port assignments confirmed by bearboss 2026-06-06.
 
 ## Port Map
 
 | Port | Name / Device | Native VLAN | Tagged VLANs | Mode | Notes |
 |------|--------------|-------------|--------------|------|-------|
-| 1 | pfSense uplink (wn-router-01) | — | 10, 20, 30, 40 | Trunk | All-VLAN trunk to pfSense vtnet0 |
-| 2 | wn-docker-01 | 10 | 20, 30, 40 | Trunk | MGMT for host NIC; macvlan containers use VLAN 30 |
-| 3 | Samsung-F43-Hardwire | 30 | — | Access | Direct-cabled device; DATA VLAN |
-| 4 | *unassigned* | 1 | — | Access | — |
-| 5 | *unknown MGMT device* | 10 | — | Access | Named in VLAN 10 untagged list; no LLDP data |
-| 6 | *unassigned* | 1 | — | Access | — |
+| 1 | ISP ONT | — | 10, 20, 30, 40 | Trunk | WAN uplink; switch carries ISP path + VLAN tags to pfSense |
+| 2 | wn-srv-01 | 10 | 20, 30, 40 | Trunk | MGMT for host NIC (10.10.10.10); macvlan containers on VLAN 30 |
+| 3 | Samsung-F43-Hardwire | 30 | — | Access | Directly cabled device; DATA VLAN |
+| 4 | *unassigned* | 1 | — | Access | Available |
+| 5 | Sonos speaker | 10 | — | Access | MGMT VLAN (trusted audio device) |
+| 6 | Sonos speaker | 1 | — | Access | Default VLAN — consider moving to MGMT (10) for consistency |
 | 7 | Robin-Office-Hardline | 10 | — | Access | Wired MGMT drop — Robin's office |
-| 8–9 | *unassigned* | 1 | — | Access | — |
+| 8–9 | *unassigned* | 1 | — | Access | Available |
 | 10 | *unknown WEB device* | 20 | — | Access | VLAN 20 native; no LLDP data |
 | 11–21 | *unassigned* | 1 | — | Access | Available |
 | 22 | AP-515 / BearAir | 10 | 20, 30, 40 | Trunk | PoE critical; STP edge + BPDU filter; 25.5W |
-| 23 | WN-MOB-TT-002 | 10 | 1, 20, 30, 40 | Trunk | LLDP detected; unknown device class |
-| 24 | Switch management | 10 | — | Access | Switch's own CLI/web access port |
+| 23 | WN-MOB-TT-002 | 10 | 1, 20, 30, 40 | Trunk | LLDP detected; device identity TBD |
+| 24 | Laptop dock (built-in NIC) | 10 | — | Access | bearboss workstation dock; MGMT VLAN |
 | 25–26 | SFP uplinks | 1 | — | — | Not in use |
 | 27–28 | RJ45 uplinks | 1 | — | — | Not in use |
+
+> **Port 6 note**: Currently in DEFAULT_VLAN (1). Sonos speakers should be on VLAN 10 (MGMT) like port 5 so they stay accessible from trusted clients; or move to a dedicated Media VLAN if stricter isolation is desired.
 
 ## PoE Budget
 
@@ -30,11 +33,10 @@ Pulled from switch `show running-config` + `show lldp info remote-device all` on
 | — | — | — | — |
 | **Total** | | | **25.5W / 195W** |
 
-Port 22 is set `power-over-ethernet critical` — it will shed lower-priority PoE devices first if budget is exceeded.
+Port 22 is set `power-over-ethernet critical` — it will shed lower-priority PoE devices before cutting power to the AP.
 
-## Named Interfaces
+## Named Interfaces (from running config)
 
-From `interface` blocks in running config:
 ```
 interface 3  → "Samsung-F43-Hardwire"
 interface 7  → "Robin-Office-Hardline"
@@ -46,18 +48,21 @@ interface 22 → "BearAir"    (AP-515; PoE critical; DLDP enabled; STP edge + BP
 | Switch Port | Remote Device | Remote IP | Description |
 |-------------|--------------|-----------|-------------|
 | 22 | 9c:8c:d8:c9:2a:9c | 10.10.10.198 | AOS-8 (MODEL: 515) — AP-515 |
-| 23 | WN-MOB-TT-002 | — | Unknown; no system caps reported |
+| 23 | WN-MOB-TT-002 | — | No system caps; device identity TBD |
 
-> Note: The AP's LLDP-reported IP (10.10.10.198) differs from its management DHCP reservation (10.10.10.101). Both respond to ping; `.101` is the VC management address.
+> AP's LLDP-reported IP (10.10.10.198) differs from its management DHCP reservation (10.10.10.101). Both respond; `.101` is the VC management address used for SSH/web.
 
 ## Cable Run Log
 
 | Date | Port | Device | Notes |
 |------|------|--------|-------|
-| 2026-06-06 | 1 | pfSense (wn-router-01) | Trunk uplink to router |
-| 2026-06-06 | 2 | wn-docker-01 | Server NIC — host + container VLAN trunk |
-| 2026-06-06 | 3 | Samsung-F43-Hardwire | DATA VLAN access port |
-| 2026-06-06 | 7 | Robin-Office-Hardline | MGMT VLAN access port |
+| 2026-06-06 | 1 | ISP ONT | WAN uplink |
+| 2026-06-06 | 2 | wn-srv-01 | Docker host — MGMT + DATA VLAN trunk |
+| 2026-06-06 | 3 | Samsung-F43-Hardwire | DATA VLAN access |
+| 2026-06-06 | 5 | Sonos speaker | MGMT VLAN access |
+| 2026-06-06 | 6 | Sonos speaker | Default VLAN (needs review) |
+| 2026-06-06 | 7 | Robin-Office-Hardline | MGMT VLAN access |
 | 2026-06-06 | 22 | AP-515 (BearAir) | AP trunk + PoE |
+| 2026-06-06 | 24 | Laptop dock | MGMT VLAN access — bearboss workstation |
 
 > Update this log whenever a cable is patched or moved.
